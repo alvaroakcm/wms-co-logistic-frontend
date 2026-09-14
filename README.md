@@ -1,4 +1,89 @@
-# React + TypeScript + Vite
+# WMS Co-Logistic Frontend
+
+Aplicación web del WMS construida con React, TypeScript y Vite. La identidad se
+gestiona con Supabase Auth y la autorización efectiva se valida en la API de
+Django.
+
+## Configuración local
+
+1. Instala Node.js y ejecuta `npm install`.
+2. Crea un archivo local `.env` (está ignorado por Git).
+3. Configura `VITE_SUPABASE_URL` y `VITE_SUPABASE_PUBLISHABLE_KEY` desde la
+   configuración API del proyecto Supabase. No guardes valores reales en
+   archivos versionados.
+4. Confirma que `VITE_API_URL` apunta a la API Django.
+5. Ejecuta `npm run dev`.
+
+Solo la clave pública/publishable puede configurarse en el frontend. Nunca
+agregues `service_role`, el JWT secret ni credenciales de PostgreSQL a variables
+que comiencen con `VITE_`.
+
+## HU-001: inicio de sesión
+
+- Supabase Auth valida correo y contraseña.
+- La sesión utiliza PKCE y permanece solo durante la sesión del navegador.
+- El access token se adjunta como Bearer token a las solicitudes a Django.
+- Django verifica el JWT, el perfil activo, los roles y los permisos.
+- La ruta `/` está protegida y los usuarios anónimos regresan a `/login`.
+- SSO y recuperación de contraseña aparecen deshabilitados porque pertenecen a
+  funcionalidades posteriores.
+
+## HU-002, HU-003 y HU-004
+
+- `/usuarios` permite buscar, registrar y editar usuarios sin duplicar correos.
+- La asignación de roles está separada y exige un permiso específico.
+- `/roles` permite crear o editar roles y seleccionar sus permisos.
+- El menú solo muestra módulos autorizados, mientras Django valida cada
+  operación nuevamente en el servidor.
+- Las altas y cambios de correo se sincronizan con Supabase Auth mediante el
+  backend; ninguna llave administrativa se expone en React.
+
+## HU-005, HU-006 y HU-007
+
+- Los usuarios autorizados pueden desactivar o reactivar cuentas desde
+  `/usuarios`; la cuenta propia está protegida contra desactivación accidental.
+- `/recuperar-contrasena` envía una solicitud con respuesta genérica para no
+  revelar si el correo existe.
+- `/restablecer-contrasena` intercambia el código PKCE, valida la nueva clave y
+  cierra todas las sesiones después del cambio.
+- `Cerrar sesión` elimina explícitamente la sesión local y obliga a volver a
+  autenticarse.
+
+Para probar recuperación local agrega esta URL exacta en Supabase, dentro de
+`Authentication > URL Configuration > Redirect URLs`:
+
+```text
+http://localhost:5173/restablecer-contrasena
+```
+
+En producción se debe registrar también la URL HTTPS exacta del dominio real.
+
+## EP-02: catálogos maestros
+
+- `/clientes` permite buscar, filtrar, registrar y editar clientes según los
+  permisos `clientes.ver`, `clientes.crear` y `clientes.editar`.
+- `/productos` permite filtrar por SKU/EAN, nombre, cliente y estado, además de
+  registrar y editar productos con los permisos equivalentes.
+- Los formularios validan RUC, EAN y campos obligatorios antes de llamar a la
+  API; Django repite las validaciones y controla la unicidad en el servidor.
+- `/almacenes` permite consultar y registrar almacenes con capacidad de
+  pallets.
+- `/ubicaciones` gestiona zonas y ubicaciones, permite filtrar por almacén,
+  zona, rack y disponibilidad, y protege ubicaciones ocupadas.
+- `/importaciones` descarga plantillas CSV e informa registros cargados y
+  rechazados después de la validación.
+
+## Verificación
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+---
+
+## Plantilla original de Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
